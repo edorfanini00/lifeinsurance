@@ -56,6 +56,7 @@ export async function importDfsCsv(input: {
       holderName: row.holder,
       categoryRaw: row.category,
       description: row.description,
+      naupaCode: row.naupaCode,
     });
 
     const evidence = await prisma.sourceEvidence.create({

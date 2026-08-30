@@ -55,6 +55,7 @@ export function mapDfsRow(raw: Record<string, string>) {
     zip: get("zip", "zip_code") || null,
     holder: get("holder", "holder_name", "company") || null,
     category: get("property_type", "category", "property_category") || null,
+    naupaCode: get("naupa_code", "prop_type", "property_type_code", "type_code") || null,
     description: get("description", "property_description") || null,
     reportingYear: Number(get("reporting_year", "year")) || null,
     sourceUrl: get("source_url") || null,
