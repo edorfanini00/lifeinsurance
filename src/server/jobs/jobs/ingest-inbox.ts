@@ -14,6 +14,15 @@ export const ingestInboxJob: JobDefinition = {
   everySeconds: 30,
   requires: ["inboxEnabled"],
   async run(ctx) {
+    if (process.env.VERCEL) {
+      return {
+        processed: 0,
+        created: 0,
+        detail:
+          "Serverless filesystem is read-only and ephemeral. Use POST /api/ingest/webhook or an authorized feed instead of the drop folder.",
+        skipped: true,
+      };
+    }
     await mkdir(INBOX_DIR, { recursive: true });
     await mkdir(PROCESSED_DIR, { recursive: true });
 
