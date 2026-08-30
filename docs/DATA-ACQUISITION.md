@@ -19,6 +19,30 @@ The site's WAF exists specifically to distinguish browsers from automated client
 2. **DFS is our regulator.** Chapter 717 requires claimant representatives to register with the same department that runs this site. Being identified as scraping DFS while holding or seeking a DFS registration is a business-ending risk, not a technical one.
 3. **It produces worse data.** Search results are paginated HTML for one name at a time. A records request returns the whole dataset in a structured format.
 
+## Registration is a data channel, not just a compliance burden
+
+s. 717.1400 grants a registered claimant's representative three things:
+
+1. The ability to file claims as a claimant's representative
+2. Receipt of fee distributions directly from the department
+3. **The ability to obtain unclaimed property dollar amounts and numbers of reported shares of stock held by the department**
+
+That third item is the one to notice. The public search is deliberately thin on account values; registered representatives can obtain the amounts from DFS directly. The route to the good data runs *through* registration rather than around it.
+
+### Who is allowed to register
+
+s. 717.101(8) defines a claimant's representative as one of exactly three things:
+
+- An attorney in good standing with The Florida Bar
+- A certified public accountant licensed in Florida
+- A private investigator licensed under Chapter 493, holding a Class "C" individual license
+
+There is no fourth category. A general business cannot register.
+
+Payment of approved fees must also be made to the attorney's law firm, the CPA's accountancy firm, or the employing licensed private investigative agency — so the licensed professional has to be inside the operating entity, not merely advising it.
+
+**This is the gating question for the whole business.** If none of the three applies, the options are to obtain a license, bring a licensed principal into the company, or operate in states with different rules.
+
 ## The channel that works
 
 A Chapter 119 public records request to DFS for a bulk extract. Florida's public records law is strong, the data is non-exempt, and the department has a standing process for it.
