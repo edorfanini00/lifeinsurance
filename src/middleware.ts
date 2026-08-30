@@ -9,6 +9,9 @@ const PUBLIC = new Set([
   "/api/auth/portal-login",
 ]);
 
+/** Endpoints that carry their own credential and must not hit session auth. */
+const MACHINE_AUTH = new Set(["/api/ingest/webhook", "/api/jobs/tick"]);
+
 function secret() {
   return new TextEncoder().encode(
     process.env.AUTH_SECRET || "dev-only-auth-secret-do-not-use-in-production-32",
@@ -21,7 +24,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname === "/" ||
-    PUBLIC.has(pathname)
+    PUBLIC.has(pathname) ||
+    MACHINE_AUTH.has(pathname)
   ) {
     return NextResponse.next();
   }

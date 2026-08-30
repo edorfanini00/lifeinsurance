@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 export async function writeAudit(input: {
@@ -20,7 +21,7 @@ export async function writeAudit(input: {
       entityType: input.entityType,
       entityId: input.entityId,
       ip: input.ip,
-      metadata: meta,
+      metadata: meta as Prisma.InputJsonValue,
     },
   });
 }

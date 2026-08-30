@@ -1,6 +1,5 @@
 import type {
   AutomationLevel,
-  Case,
   CommunicationChannel,
   ComplianceDecision,
   ConflictFlag,

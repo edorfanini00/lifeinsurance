@@ -10,8 +10,11 @@ export const fixturePublicRecordsAdapter: SourceAdapter = {
   legalNotes:
     "Returns only versioned fixtures bundled with the application so the research agent can be exercised without scraping. Replace with a licensed provider in production.",
   async search(query: AdapterQuery): Promise<AdapterResult> {
-    const name = (query.name || "").toUpperCase();
-    const hits = FIXTURES.filter((f) => f.names.some((n) => name.includes(n) || n.includes(name.split(" ")[0] || "___")));
+    const name = normalize(query.name);
+    if (!name) return emptyResult(this.id, "No name supplied.");
+    // Full-name match only. A shared first name is never enough to attach a
+    // death, a relative, or a contact to a person.
+    const hits = FIXTURES.filter((f) => f.names.some((n) => normalize(n) === name));
     if (!hits.length) {
       return emptyResult(this.id, "No fixture matched. Connect a licensed obituary/probate provider for live research.");
     }
@@ -30,9 +33,25 @@ export const fixturePublicRecordsAdapter: SourceAdapter = {
   },
 };
 
-const FIXTURES = [
+function normalize(value?: string) {
+  return (value || "")
+    .toUpperCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+type Fixture = {
+  names: string[];
+  title: string;
+  url: string;
+  interpretation: string;
+  raw: Record<string, string>;
+};
+
+const FIXTURES: Fixture[] = [
   {
-    names: ["JOHN A SMITH", "JOHN SMITH", "TAMPA"],
+    names: ["JOHN A SMITH"],
     title: "Obituary — John A. Smith, Tampa",
     url: "https://example.invalid/obituaries/john-a-smith-tampa-2019",
     interpretation: "Published obituary identifying spouse and children. Does not establish legal entitlement to any property.",
@@ -47,7 +66,7 @@ const FIXTURES = [
     },
   },
   {
-    names: ["JOHN A SMITH", "HILLSBOROUGH"],
+    names: ["JOHN A SMITH"],
     title: "Hillsborough probate docket 2019-CP-004812",
     url: "https://example.invalid/hillsborough/probate/2019-CP-004812",
     interpretation: "Public docket lists Michael Smith as personal representative. Court role ≠ insurance beneficiary.",
@@ -60,7 +79,7 @@ const FIXTURES = [
     },
   },
   {
-    names: ["MICHAEL SMITH", "ORLANDO"],
+    names: ["MICHAEL SMITH"],
     title: "Professional listing — Michael Smith, Orlando",
     url: "https://example.invalid/directory/michael-smith-orlando",
     interpretation: "Public professional listing used only for contactability research.",

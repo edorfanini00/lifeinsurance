@@ -1,0 +1,2 @@
+Drop authorized Florida unclaimed-property CSV extracts in this folder.
+The watched-inbox worker imports them within ~30 seconds and moves the file to data/processed.

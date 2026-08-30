@@ -38,6 +38,11 @@ yarn-error.log*
 /prisma/dev.db
 /prisma/dev.db-journal
 
+# ingest working directories
+/data/inbox/*
+!/data/inbox/.gitkeep
+/data/processed
+
 # vercel
 .vercel
 

@@ -32,7 +32,7 @@ export async function StaffShell({
             <LogoutButton />
           </div>
         </div>
-        <nav className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-4 pb-2">
+        <nav className="mx-auto flex max-w-[1400px] flex-wrap gap-1 px-4 pb-2">
           {NAV.map((item) => (
             <Link
               key={item.href}

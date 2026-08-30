@@ -14,6 +14,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.auditLog.deleteMany();
+  await prisma.jobRun.deleteMany();
+  await prisma.ingestFeed.deleteMany();
+  await prisma.automationConfig.deleteMany();
   await prisma.aiFinding.deleteMany();
   await prisma.aiResearchRun.deleteMany();
   await prisma.approvalRequest.deleteMany();
@@ -116,6 +119,10 @@ async function main() {
       employingOrg: "Lifey Recovery LLC",
       status: "ACTIVE",
     },
+  });
+
+  await prisma.automationConfig.create({
+    data: { organizationId: org.id, webhookKeyHash: hashLookup("lifey-demo-webhook-key") },
   });
 
   await prisma.scoringWeightSet.create({
@@ -453,7 +460,10 @@ async function main() {
         },
       });
       if (spec.contact) {
-        const phone = spec.account === "FL-UP-4481920" ? "(407) 555-0148" : "(305) 555-0199";
+        const phone =
+          spec.account === "FL-UP-4481920"
+            ? "(407) 555-0148"
+            : `(305) 555-0${String(100 + n).slice(-3)}`;
         const email =
           spec.account === "FL-UP-4481920"
             ? "michael.smith@example.com"

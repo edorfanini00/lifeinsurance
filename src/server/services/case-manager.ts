@@ -47,7 +47,17 @@ export function nextBestAction(input: {
       confidence: 80,
     };
   }
-  if (input.hasContact && !["CONTACTED", "RESPONDED", "QUALIFIED"].includes(input.status) && input.status !== "READY_FOR_OUTREACH") {
+  if (input.status === "READY_FOR_OUTREACH") {
+    return {
+      action: "Licensed representative review, then release the drafted first touch",
+      reason:
+        "Identity, death, relationship, and contact evidence are on file. Sending is human-gated regardless of automation level.",
+      missing: ["First-outbound approval"],
+      risk: "Do not disclose value or account numbers on first touch. Eligibility remains unverified.",
+      confidence: 86,
+    };
+  }
+  if (input.hasContact && !["CONTACTED", "RESPONDED", "QUALIFIED"].includes(input.status)) {
     return {
       action: "Human review of identity packet, then draft first outreach",
       reason: "Default automation is research + draft. First send requires approval.",

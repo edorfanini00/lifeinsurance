@@ -838,6 +838,57 @@ model AiFinding {
   evidence     SourceEvidence[] @relation("FindingEvidence")
 }
 
+enum JobStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+model JobRun {
+  id             String    @id @default(uuid())
+  jobId          String
+  status         JobStatus @default(RUNNING)
+  triggeredBy    String    @default("schedule")
+  startedAt      DateTime  @default(now())
+  finishedAt     DateTime?
+  itemsProcessed Int       @default(0)
+  itemsCreated   Int       @default(0)
+  detail         String?
+  error          String?
+
+  @@index([jobId, startedAt])
+}
+
+model IngestFeed {
+  id             String    @id @default(uuid())
+  organizationId String
+  name           String
+  url            String
+  adapterId      String    @default("florida-dfs-import")
+  authHeaderEnc  String?
+  enabled        Boolean   @default(false)
+  legalBasis     String
+  lastFetchedAt  DateTime?
+  lastHash       String?
+  createdAt      DateTime  @default(now())
+}
+
+model AutomationConfig {
+  id                String   @id @default(uuid())
+  organizationId    String   @unique
+  enabled           Boolean  @default(true)
+  tickSeconds       Int      @default(60)
+  inboxEnabled      Boolean  @default(true)
+  feedEnabled       Boolean  @default(true)
+  autoResearch      Boolean  @default(true)
+  autoScore         Boolean  @default(true)
+  autoConflicts     Boolean  @default(true)
+  autoDraftOutreach Boolean  @default(true)
+  webhookKeyHash    String?
+  updatedAt         DateTime @updatedAt
+}
+
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?

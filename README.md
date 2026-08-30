@@ -37,6 +37,38 @@ Open [http://localhost:3000](http://localhost:3000).
 | Compliance | claire@lifey.local | lifey-demo |
 | Claimant portal | michael.smith@example.com | portal-demo |
 
+## Automation
+
+Six background workers run on a scheduler (`src/server/jobs/`), visible and controllable at `/automation`.
+
+| Worker | Interval | Does |
+|---|---|---|
+| Watched inbox import | 30s | Imports any authorized CSV dropped in `data/inbox`, archives it to `data/processed` |
+| Authorized feed fetch | 15m | Pulls operator-configured extract URLs, skips unchanged content by hash |
+| Autonomous research | 60s | Queries approved adapters and writes sourced findings into the graph |
+| Duplicate & conflict scan | 5m | Flags shared contacts, same-name/city collisions, already-claimed property |
+| Rescore and requeue | 2m | Recomputes confidence and score, moves cases between HOT / GOOD / RESEARCH / LOW |
+| Draft first-touch outreach | 3m | Drafts a compliant email and opens a human approval request — never sends |
+
+Three ways records enter, all automatic once configured:
+
+```bash
+# 1. drop a file
+cp extract.csv data/inbox/
+
+# 2. machine ingest
+curl -X POST localhost:3000/api/ingest/webhook \
+  -H "x-api-key: lifey-demo-webhook-key" -H "Content-Type: application/json" \
+  -d '{"records":[{"account_number":"...","owner_name":"..."}]}'
+
+# 3. external cron (serverless deploys)
+curl -X POST localhost:3000/api/jobs/tick -H "Authorization: Bearer $CRON_SECRET"
+```
+
+Tick interval is `AUTOMATION_TICK_SECONDS` (default 30). `AUTOMATION_DISABLED=1` turns the in-process scheduler off.
+
+**What automation will never do:** send outreach, execute an agreement, file a claim, decide legal entitlement, or mark someone deceased without evidence. Those stay behind `ComplianceService` and a human approval at every automation level.
+
 ## Florida compliance (engineered, not legal advice)
 
 - Official recovery agreement path only for Florida-held accounts ([Fla. Stat. § 717.135](https://flsenate.gov/laws/statutes/2025/717.135)). No substitute contingency contracts.
