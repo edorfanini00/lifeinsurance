@@ -1,0 +1,32 @@
+export const voiceAgentPolicy = {
+  id: "voice-agent-v1",
+  enabled: false,
+  purpose: [
+    "confirm identity",
+    "explain why we contacted them",
+    "establish the relationship with the deceased",
+    "explain the recovery process at a high level",
+    "answer basic process questions",
+    "schedule a call with a licensed representative",
+  ],
+  never: [
+    "pretend to be a government employee",
+    "pretend to be an attorney",
+    "give legal advice",
+    "guarantee recovery",
+    "request payment upfront",
+    "request full SSN during cold outreach",
+    "pressure elderly people",
+    "misrepresent the amount available",
+  ],
+  escalateImmediately: [
+    "estate disputes",
+    "probate",
+    "multiple heirs",
+    "beneficiary disagreements",
+    "legal entitlement",
+    "powers of attorney",
+    "trust disputes",
+  ],
+  requiredProvider: "Twilio or equivalent + licensed-rep escalation queue",
+};

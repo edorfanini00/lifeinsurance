@@ -1,0 +1,854 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserKind {
+  STAFF
+  CLAIMANT
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  RESEARCHER
+  OUTREACH
+  CASE_MANAGER
+  LICENSED_REPRESENTATIVE
+  COMPLIANCE
+  VIEWER
+  CLAIMANT
+}
+
+enum CaseType {
+  UNCLAIMED_PROPERTY
+  LOST_POLICY_INVESTIGATION
+}
+
+enum CaseStatus {
+  DISCOVERED
+  RESEARCHING
+  IDENTITY_CONFIRMED
+  DECEASED_VERIFIED
+  RELATIVES_FOUND
+  READY_FOR_OUTREACH
+  CONTACTED
+  RESPONDED
+  QUALIFIED
+  AGREEMENT_PENDING
+  AGREEMENT_SIGNED
+  DOCUMENTS_REQUESTED
+  DOCUMENTS_PARTIAL
+  DOCUMENTS_COMPLETE
+  CLAIM_READY
+  CLAIM_SUBMITTED
+  DFS_REVIEW
+  ADDITIONAL_DOCUMENTATION_REQUESTED
+  APPROVED
+  PAYMENT_PENDING
+  PAID
+  FEE_RECEIVED
+  CLOSED
+  DENIED
+  DISPUTED
+  DUPLICATE
+  NOT_ELIGIBLE
+}
+
+enum ClaimantCategory {
+  KNOWN_RELATIVE
+  LIKELY_HEIR
+  POTENTIAL_BENEFICIARY
+  PERSONAL_REPRESENTATIVE
+  CONFIRMED_CLAIMANT
+}
+
+enum OpportunityQueue {
+  HOT
+  GOOD
+  RESEARCH
+  LOW_PRIORITY
+}
+
+enum InsuranceCategory {
+  LIFE_INSURANCE_PROCEEDS
+  DEATH_BENEFITS
+  ANNUITY_PROCEEDS
+  INSURANCE_REFUNDS
+  INSURANCE_SETTLEMENT
+  INSURANCE_RELATED_CHECKS
+  UNKNOWN_INSURANCE_PROPERTY
+  UNLIKELY_INSURANCE
+}
+
+enum FindingKind {
+  FACT
+  INFERENCE
+  UNVERIFIED_POSSIBILITY
+}
+
+enum ComplianceDecision {
+  ALLOWED
+  REQUIRES_HUMAN_REVIEW
+  BLOCKED
+}
+
+enum AutomationLevel {
+  RESEARCH_ONLY
+  RESEARCH_AND_DRAFT
+  SEMI_AUTOMATED
+  FULL_PERMITTED
+}
+
+enum RepresentativeType {
+  FLORIDA_ATTORNEY
+  FLORIDA_CPA
+  FLORIDA_CLASS_C_PI
+}
+
+enum RepresentativeStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  PENDING
+}
+
+enum RelationshipType {
+  SPOUSE
+  FORMER_SPOUSE
+  CHILD
+  ADOPTED_CHILD
+  PARENT
+  SIBLING
+  GRANDCHILD
+  NIECE_NEPHEW
+  EXECUTOR
+  PERSONAL_REPRESENTATIVE
+  TRUSTEE
+  UNKNOWN
+}
+
+enum CommunicationChannel {
+  EMAIL
+  SMS
+  PHONE
+  LETTER
+  VOICEMAIL_TASK
+  PORTAL
+  INTERNAL
+}
+
+enum CommunicationDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum CommunicationStatus {
+  DRAFT
+  PENDING_APPROVAL
+  SCHEDULED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum DocumentType {
+  GOVERNMENT_ID
+  DEATH_CERTIFICATE
+  BIRTH_CERTIFICATE
+  MARRIAGE_CERTIFICATE
+  PROBATE_DOCUMENTS
+  LETTERS_OF_ADMINISTRATION
+  LETTERS_TESTAMENTARY
+  TRUST_DOCUMENTS
+  PROOF_OF_ADDRESS
+  NAME_CHANGE
+  DFS_AGREEMENT
+  DFS_CLAIM_FORM
+  OTHER
+}
+
+enum DocumentStatus {
+  REQUESTED
+  UPLOADED
+  IN_REVIEW
+  ACCEPTED
+  REJECTED
+}
+
+enum ClaimStatus {
+  DRAFT
+  READY
+  SUBMITTED
+  IN_REVIEW
+  ADDITIONAL_DOCS
+  APPROVED
+  DENIED
+  WITHDRAWN
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+enum ApprovalType {
+  FIRST_OUTBOUND
+  CLAIM_SUBMISSION
+  LEGAL_ENTITLEMENT
+  SENSITIVE_DISCLOSURE
+  AGREEMENT_EXECUTION
+  CLAIMANT_CHANGE
+  HEIR_RELATIONSHIP_CHANGE
+  CLOSE_DISPUTED
+  COMPLIANCE_RULE_CHANGE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ConflictType {
+  EXISTING_CLAIM
+  MULTIPLE_ASSERTING_HEIRS
+  ACTIVE_PROBATE
+  ATTORNEY_REPRESENTED
+  ALREADY_CLAIMED
+  AMBIGUOUS_IDENTITY
+  DUPLICATE_HOUSEHOLD
+}
+
+enum OwnerReportedStatus {
+  UNKNOWN
+  APPARENT_OWNER
+  REPORTED_DECEASED
+}
+
+enum PropertyClaimStatus {
+  UNCLAIMED
+  CLAIM_PENDING
+  CLAIMED
+  PAID
+  UNKNOWN
+}
+
+enum SuppressionReason {
+  STOP
+  UNSUBSCRIBE
+  DNC
+  WRONG_PERSON
+  ATTORNEY_REPRESENTED
+  DECEASED_RECIPIENT
+  HOSTILE
+  DUPLICATE_FAMILY
+  ACTIVE_DISPUTE
+}
+
+enum AgreementType {
+  DFS_UP_309_RECOVERY
+  DFS_UP_310_PURCHASE
+  LOST_POLICY_AUTHORIZATION
+}
+
+model Organization {
+  id                   String           @id @default(uuid())
+  name                 String
+  legalName            String
+  publicDisclosure     String
+  website              String?
+  phone                String?
+  email                String?
+  addressLine1         String?
+  city                 String?
+  state                String           @default("FL")
+  zip                  String?
+  automationLevel      AutomationLevel  @default(RESEARCH_AND_DRAFT)
+  maxFeePercent        Int              @default(30)
+  identityThreshold    Int              @default(70)
+  createdAt            DateTime         @default(now())
+  users                User[]
+  representatives      Representative[]
+  properties           Property[]
+  cases                Case[]
+  scoringWeights       ScoringWeightSet[]
+  complianceRuleSets   ComplianceRuleSet[]
+  sequences            OutreachSequenceTemplate[]
+  sources              Source[]
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  kind               UserKind
+  role               UserRole
+  email              String    @unique
+  name               String
+  passwordHash       String?
+  mfaEnabled         Boolean   @default(false)
+  disabled           Boolean   @default(false)
+  lastLoginAt        DateTime?
+  lastLoginIp        String?
+  personId           String?
+  person             Person?   @relation(fields: [personId], references: [id])
+  createdAt          DateTime  @default(now())
+  sessions           Session[]
+  assignedCases      Case[]    @relation("CaseAssignee")
+  assignedTasks      Task[]    @relation("TaskAssignee")
+  approvalsRequested ApprovalRequest[] @relation("ApprovalRequester")
+  approvalsDecided   ApprovalRequest[] @relation("ApprovalDecider")
+  auditLogs          AuditLog[]
+  communications     Communication[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Source {
+  id             String   @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  adapterId      String
+  name           String
+  jurisdiction   String?
+  legalNotes     String
+  createdAt      DateTime @default(now())
+  evidence       SourceEvidence[]
+}
+
+model SourceEvidence {
+  id               String   @id @default(uuid())
+  sourceId         String
+  source           Source   @relation(fields: [sourceId], references: [id])
+  field            String
+  rawValue         String
+  normalizedValue  String?
+  url              String?
+  retrievedAt      DateTime
+  interpretation   String?
+  findingKind      FindingKind @default(FACT)
+  externalRecordId String?
+  createdAt        DateTime @default(now())
+  properties       Property[]     @relation("PropertyEvidence")
+  persons          Person[]       @relation("PersonEvidence")
+  addresses        Address[]      @relation("AddressEvidence")
+  deaths           DeathRecord[]  @relation("DeathEvidence")
+  relationships    Relationship[] @relation("RelationshipEvidence")
+  contacts         ContactMethod[] @relation("ContactEvidence")
+  probateCases     ProbateCase[]  @relation("ProbateEvidence")
+  findings         AiFinding[]    @relation("FindingEvidence")
+}
+
+model Holder {
+  id        String     @id @default(uuid())
+  name      String
+  normalizedName String
+  knownInsurer Boolean @default(false)
+  properties Property[]
+}
+
+model Property {
+  id                    String               @id @default(uuid())
+  organizationId        String
+  organization          Organization         @relation(fields: [organizationId], references: [id])
+  accountNumber         String
+  externalRecordId      String?
+  holderId              String?
+  holder                Holder?              @relation(fields: [holderId], references: [id])
+  ownerNameRaw          String
+  coOwnerNameRaw        String?
+  reportedAddress       String?
+  city                  String?
+  state                 String?
+  zip                   String?
+  categoryRaw           String?
+  description           String?
+  reportingYear         Int?
+  reportedOwnerStatus   OwnerReportedStatus  @default(UNKNOWN)
+  claimStatus           PropertyClaimStatus  @default(UNCLAIMED)
+  estimatedValueCents   Int?
+  valueKnown            Boolean              @default(false)
+  sourceUrl             String?
+  retrievedAt           DateTime
+  jurisdiction          String               @default("FL")
+  heldByState           Boolean              @default(true)
+  insuranceCategory     InsuranceCategory    @default(UNLIKELY_INSURANCE)
+  insuranceProbability  Int                  @default(0)
+  evidence              SourceEvidence[]     @relation("PropertyEvidence")
+  owners                PropertyOwner[]
+  cases                 Case[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@unique([organizationId, accountNumber])
+  @@index([ownerNameRaw])
+  @@index([insuranceProbability])
+}
+
+model PropertyOwner {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id])
+  role       String   @default("owner")
+  confidence Int      @default(0)
+}
+
+model Person {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  canonicalFullName  String
+  normalizedName     String
+  dateOfBirth        DateTime?
+  estimatedAge       Int?
+  ssnLast4Encrypted  String?
+  lastKnownAddress   String?
+  county             String?
+  identityConfidence Int       @default(0)
+  livingStatus       String    @default("UNKNOWN")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  aliases            PersonAlias[]
+  addresses          Address[]
+  death              DeathRecord?
+  fromRelationships  Relationship[] @relation("RelationshipFrom")
+  toRelationships    Relationship[] @relation("RelationshipTo")
+  contacts           ContactMethod[]
+  propertyLinks      PropertyOwner[]
+  casePeople         CasePerson[]
+  users              User[]
+  evidence           SourceEvidence[] @relation("PersonEvidence")
+  probateAsPR        ProbateCase[]    @relation("ProbatePR")
+  estates            Estate[]
+
+  @@index([normalizedName])
+  @@index([county])
+}
+
+model PersonAlias {
+  id        String @id @default(uuid())
+  personId  String
+  person    Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  name      String
+  kind      String
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  personId    String
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  line1       String
+  city        String
+  state       String
+  zip         String?
+  county      String?
+  historic    Boolean  @default(false)
+  current     Boolean  @default(false)
+  evidence    SourceEvidence[] @relation("AddressEvidence")
+  createdAt   DateTime @default(now())
+}
+
+model DeathRecord {
+  id                 String   @id @default(uuid())
+  personId           String   @unique
+  person             Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  dateOfDeath        DateTime?
+  location           String?
+  obituaryUrl        String?
+  probateCounty      String?
+  probateCaseNumber  String?
+  personalRepresentative String?
+  probateStatus      String?
+  confidence         Int      @default(0)
+  evidence           SourceEvidence[] @relation("DeathEvidence")
+  createdAt          DateTime @default(now())
+}
+
+model Relationship {
+  id           String           @id @default(uuid())
+  fromPersonId String
+  fromPerson   Person           @relation("RelationshipFrom", fields: [fromPersonId], references: [id])
+  toPersonId   String
+  toPerson     Person           @relation("RelationshipTo", fields: [toPersonId], references: [id])
+  type         RelationshipType
+  confidence   Int
+  discoveredAt DateTime         @default(now())
+  evidence     SourceEvidence[] @relation("RelationshipEvidence")
+}
+
+model ContactMethod {
+  id          String   @id @default(uuid())
+  personId    String
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  channel     CommunicationChannel
+  valueEnc    String
+  valueHash   String
+  label       String?
+  confidence  Int      @default(0)
+  evidence    SourceEvidence[] @relation("ContactEvidence")
+  createdAt   DateTime @default(now())
+
+  @@index([valueHash])
+}
+
+model ProbateCase {
+  id              String   @id @default(uuid())
+  county          String
+  caseNumber      String
+  status          String
+  decedentId      String?
+  personalRepId   String?
+  personalRep     Person?  @relation("ProbatePR", fields: [personalRepId], references: [id])
+  estate          Estate[]
+  evidence        SourceEvidence[] @relation("ProbateEvidence")
+  createdAt       DateTime @default(now())
+
+  @@unique([county, caseNumber])
+}
+
+model Estate {
+  id            String       @id @default(uuid())
+  decedentId    String
+  decedent      Person       @relation(fields: [decedentId], references: [id])
+  probateCaseId String?
+  probateCase   ProbateCase? @relation(fields: [probateCaseId], references: [id])
+  cases         Case[]
+}
+
+model Case {
+  id                    String            @id @default(uuid())
+  organizationId        String
+  organization          Organization      @relation(fields: [organizationId], references: [id])
+  caseNumber            String            @unique
+  type                  CaseType          @default(UNCLAIMED_PROPERTY)
+  status                CaseStatus        @default(DISCOVERED)
+  propertyId            String
+  property              Property          @relation(fields: [propertyId], references: [id])
+  estateId              String?
+  estate                Estate?           @relation(fields: [estateId], references: [id])
+  assigneeId            String?
+  assignee              User?             @relation("CaseAssignee", fields: [assigneeId], references: [id])
+  representativeId      String?
+  representative        Representative?   @relation(fields: [representativeId], references: [id])
+  opportunityScore      Int               @default(0)
+  queue                 OpportunityQueue  @default(LOW_PRIORITY)
+  nextAction            String?
+  nextActionReason      String?
+  riskFlags             String?
+  aiConfidence          Int?
+  identityConfidence    Int               @default(0)
+  deathConfidence       Int               @default(0)
+  familyConfidence      Int               @default(0)
+  contactConfidence     Int               @default(0)
+  outreachApproved      Boolean           @default(false)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  people                CasePerson[]
+  tasks                 Task[]
+  communications        Communication[]
+  documents             Document[]
+  agreements            Agreement[]
+  claims                Claim[]
+  conflicts             ConflictFlag[]
+  researchRuns          AiResearchRun[]
+  approvals             ApprovalRequest[]
+
+  @@index([status])
+  @@index([opportunityScore])
+  @@index([queue])
+}
+
+model CasePerson {
+  id                String            @id @default(uuid())
+  caseId            String
+  case              Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  personId          String
+  person            Person            @relation(fields: [personId], references: [id])
+  role              String
+  claimantCategory  ClaimantCategory?
+  isPrimaryContact  Boolean           @default(false)
+}
+
+model ScoringWeightSet {
+  id                 String   @id @default(uuid())
+  organizationId     String
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  version            Int
+  active             Boolean  @default(false)
+  valueWeight        Int      @default(30)
+  identityWeight     Int      @default(20)
+  familyWeight       Int      @default(15)
+  contactWeight      Int      @default(10)
+  documentationWeight Int     @default(10)
+  probateWeight      Int      @default(10)
+  claimWeight        Int      @default(5)
+  approvedAt         DateTime?
+  createdAt          DateTime @default(now())
+}
+
+model ComplianceRuleSet {
+  id             String   @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  version        Int
+  active         Boolean  @default(false)
+  maxFeePercent  Int      @default(30)
+  notes          String
+  approvedAt     DateTime?
+  createdAt      DateTime @default(now())
+}
+
+model Representative {
+  id                 String               @id @default(uuid())
+  organizationId     String
+  organization       Organization         @relation(fields: [organizationId], references: [id])
+  name               String
+  type               RepresentativeType
+  licenseNumber      String
+  dfsRegistered      Boolean              @default(false)
+  dfsRegistrationId  String?
+  registrationExpires DateTime?
+  employingOrg       String
+  status             RepresentativeStatus @default(PENDING)
+  cases              Case[]
+  agreements         Agreement[]
+  claims             Claim[]
+}
+
+model OutreachSequenceTemplate {
+  id             String   @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  active         Boolean  @default(true)
+  steps          OutreachStepTemplate[]
+}
+
+model OutreachStepTemplate {
+  id           String   @id @default(uuid())
+  sequenceId   String
+  sequence     OutreachSequenceTemplate @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  dayOffset    Int
+  channel      CommunicationChannel
+  templateBody String
+  order        Int
+}
+
+model Communication {
+  id            String                 @id @default(uuid())
+  caseId        String
+  case          Case                   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?                  @relation(fields: [userId], references: [id])
+  channel       CommunicationChannel
+  direction     CommunicationDirection
+  status        CommunicationStatus    @default(DRAFT)
+  subject       String?
+  body          String
+  toHash        String?
+  dayOffset     Int?
+  sentAt        DateTime?
+  createdAt     DateTime               @default(now())
+}
+
+model SuppressionEntry {
+  id        String             @id @default(uuid())
+  channel   CommunicationChannel
+  valueHash String
+  reason    SuppressionReason
+  notes     String?
+  createdAt DateTime           @default(now())
+
+  @@unique([channel, valueHash])
+}
+
+model Document {
+  id           String         @id @default(uuid())
+  caseId       String
+  case         Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type         DocumentType
+  status       DocumentStatus @default(REQUESTED)
+  fileName     String?
+  storageKey   String?
+  mimeType     String?
+  uploadedById String?
+  createdAt    DateTime       @default(now())
+  accessLogs   DocumentAccessLog[]
+}
+
+model DocumentAccessLog {
+  id         String   @id @default(uuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String?
+  action     String
+  ip         String?
+  createdAt  DateTime @default(now())
+}
+
+model Agreement {
+  id                 String         @id @default(uuid())
+  caseId             String
+  case               Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type               AgreementType
+  version            String
+  propertyAccount    String
+  grossAmountCents   Int?
+  feePercent         Int
+  feeCents           Int?
+  claimantAmountCents Int?
+  representativeId   String?
+  representative     Representative? @relation(fields: [representativeId], references: [id])
+  executedAt         DateTime?
+  claimantSignedAt   DateTime?
+  representativeSignedAt DateTime?
+  irrevocable        Boolean        @default(false)
+  substituteContract Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+}
+
+model Claim {
+  id               String      @id @default(uuid())
+  caseId           String
+  case             Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  representativeId String?
+  representative   Representative? @relation(fields: [representativeId], references: [id])
+  status           ClaimStatus @default(DRAFT)
+  formCode         String?
+  submittedAt      DateTime?
+  approvedAt       DateTime?
+  deniedAt         DateTime?
+  approvedCents    Int?
+  notes            String?
+  events           ClaimEvent[]
+  payments         Payment[]
+  createdAt        DateTime    @default(now())
+}
+
+model ClaimEvent {
+  id        String   @id @default(uuid())
+  claimId   String
+  claim     Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  type      String
+  detail    String
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  claimId        String
+  claim          Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  amountCents    Int
+  receivedAt     DateTime?
+  claimantPaidAt DateTime?
+  fees           Fee[]
+}
+
+model Fee {
+  id          String   @id @default(uuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amountCents Int
+  collectedAt DateTime?
+  blockedReason String?
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  caseId      String
+  case        Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assigneeId  String?
+  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  title       String
+  detail      String?
+  status      TaskStatus @default(OPEN)
+  dueAt       DateTime?
+  createdAt   DateTime   @default(now())
+}
+
+model ApprovalRequest {
+  id          String         @id @default(uuid())
+  caseId      String?
+  case        Case?          @relation(fields: [caseId], references: [id])
+  type        ApprovalType
+  status      ApprovalStatus @default(PENDING)
+  reason      String
+  payload     Json?
+  requesterId String
+  requester   User           @relation("ApprovalRequester", fields: [requesterId], references: [id])
+  deciderId   String?
+  decider     User?          @relation("ApprovalDecider", fields: [deciderId], references: [id])
+  decidedAt   DateTime?
+  createdAt   DateTime       @default(now())
+}
+
+model ConflictFlag {
+  id        String       @id @default(uuid())
+  caseId    String
+  case      Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type      ConflictType
+  detail    String
+  open      Boolean      @default(true)
+  createdAt DateTime     @default(now())
+}
+
+model AiResearchRun {
+  id           String      @id @default(uuid())
+  caseId       String?
+  case         Case?       @relation(fields: [caseId], references: [id])
+  objective    String
+  model        String
+  promptVersion String
+  status       String
+  stopReason   String?
+  resultSummary String?
+  confidence   Int?
+  createdAt    DateTime    @default(now())
+  completedAt  DateTime?
+  findings     AiFinding[]
+}
+
+model AiFinding {
+  id           String      @id @default(uuid())
+  runId        String
+  run          AiResearchRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  kind         FindingKind
+  statement    String
+  confidence   Int
+  evidence     SourceEvidence[] @relation("FindingEvidence")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  ip         String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
